@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.billsafe.auth.UserSession
 import com.billsafe.data.api.BillSafeApi
 import com.billsafe.data.api.dto.CreateUserRequest
+import com.billsafe.network.BackendConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,10 @@ class UserSyncViewModel @Inject constructor(
 
             try {
                 val fcmToken = getFcmTokenOrNull()
+                Log.d(
+                    "BillSafeFCM",
+                    "Syncing user to backend uid=$uid baseUrl=${BackendConfig.apiBaseUrl()} hasFcmToken=${!fcmToken.isNullOrBlank()}"
+                )
                 val request = CreateUserRequest(
                     email = email,
                     name = firebaseUser.displayName,
@@ -57,11 +62,13 @@ class UserSyncViewModel @Inject constructor(
                     val message = response.error ?: "Failed to sync user."
                     _lastError.value = message
                     Log.w("UserSync", "Backend user sync failed: $message")
+                    Log.w("BillSafeFCM", "Backend user sync failed: $message")
                 }
             } catch (e: Exception) {
                 val message = e.message ?: "Failed to sync user."
                 _lastError.value = message
                 Log.w("UserSync", "Backend user sync failed", e)
+                Log.w("BillSafeFCM", "Backend user sync failed", e)
             } finally {
                 _syncing.value = false
             }

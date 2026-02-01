@@ -16,6 +16,15 @@ exports.createUser = async (req, res) => {
         }
 
         let user = await User.findOne({ uid });
+
+        // If the user exists in Mongo by email (e.g., Firebase uid changed), re-link it to the new uid.
+        if (!user) {
+            const userByEmail = await User.findOne({ email });
+            if (userByEmail) {
+                user = userByEmail;
+                user.uid = uid;
+            }
+        }
         
         if (user) {
             // Update existing user
@@ -37,8 +46,12 @@ exports.createUser = async (req, res) => {
             await user.save();
         }
 
+        console.log(`Upserted user uid=${uid} email=${email} hasFcmToken=${Boolean(user.fcmToken)}`);
         res.status(200).json({ success: true, data: user });
     } catch (error) {
+        if (error?.code === 11000) {
+            return res.status(409).json({ success: false, error: 'User already exists' });
+        }
         res.status(500).json({ success: false, error: error.message });
     }
 };
