@@ -6,9 +6,18 @@ plugins {
     kotlin("kapt")
 }
 
+import java.util.Properties
+
 android {
     namespace = "com.billsafe"
     compileSdk = 34
+
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val keystoreProperties = Properties()
+    val hasReleaseKeystore = keystorePropertiesFile.exists()
+    if (hasReleaseKeystore) {
+        keystoreProperties.load(keystorePropertiesFile.inputStream())
+    }
 
     defaultConfig {
         applicationId = "com.billsafe"
@@ -16,6 +25,18 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+    }
+
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                // `storeFile` is resolved relative to `android/` (the Gradle root project).
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
     }
 
     buildTypes {
@@ -26,6 +47,8 @@ android {
         release {
             isMinifyEnabled = false
             buildConfigField("String", "API_BASE_URL", "\"https://billsafe.up.railway.app/\"")
+            // For Play Store, provide `android/keystore.properties` so release is signed with your upload key.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

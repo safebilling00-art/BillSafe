@@ -37,6 +37,7 @@ android/**/build/
 android/local.properties
 android/**/local.properties
 android/app/google-services.json
+android/keystore.properties
 
 # --- Optional docs you may not want public ---
 /ARCHITECTURE.md
