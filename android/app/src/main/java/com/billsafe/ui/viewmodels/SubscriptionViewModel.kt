@@ -2,22 +2,32 @@ package com.billsafe.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.billsafe.auth.UserSession
 import com.billsafe.data.dao.SubscriptionDao
 import com.billsafe.data.entities.Subscription
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
 class SubscriptionViewModel @Inject constructor(
-    private val subscriptionDao: SubscriptionDao
+    private val subscriptionDao: SubscriptionDao,
+    private val userSession: UserSession
 ) : ViewModel() {
 
-    private val userId = "user_123" // TODO: Get from Firebase Auth
-
-    val subscriptions: Flow<List<Subscription>> = subscriptionDao.getActiveSubscriptions(userId)
+    val subscriptions: Flow<List<Subscription>> = userSession.uid.flatMapLatest { userId ->
+        if (userId.isNullOrBlank()) {
+            flowOf(emptyList())
+        } else {
+            subscriptionDao.getActiveSubscriptions(userId)
+        }
+    }
 
     suspend fun addSubscriptionIfNew(
         appName: String,
@@ -25,6 +35,8 @@ class SubscriptionViewModel @Inject constructor(
         billingCycle: String,
         paymentMethod: String = ""
     ): Boolean {
+        val userId = userSession.uid.value ?: return false
+
         val cleanedName = appName.trim()
         if (cleanedName.isBlank()) return false
 

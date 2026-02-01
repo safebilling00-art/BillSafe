@@ -23,7 +23,7 @@ exports.createSubscription = async (req, res) => {
         });
 
         await subscription.save();
-        res.status(201).json({ success: true, subscription });
+        res.status(201).json({ success: true, data: subscription });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -44,7 +44,7 @@ exports.getActiveSubscriptions = async (req, res) => {
             status: 'active'
         }).sort({ renewalDate: 1 });
 
-        res.status(200).json({ success: true, subscriptions });
+        res.status(200).json({ success: true, data: subscriptions });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -73,7 +73,7 @@ exports.getUnusedSubscriptions = async (req, res) => {
             ]
         });
 
-        res.status(200).json({ success: true, subscriptions });
+        res.status(200).json({ success: true, data: subscriptions });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -91,7 +91,7 @@ exports.updateSubscription = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Subscription not found' });
         }
 
-        res.status(200).json({ success: true, subscription });
+        res.status(200).json({ success: true, data: subscription });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -112,7 +112,7 @@ exports.cancelSubscription = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Subscription not found' });
         }
 
-        res.status(200).json({ success: true, subscription });
+        res.status(200).json({ success: true, data: subscription });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

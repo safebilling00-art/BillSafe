@@ -1,5 +1,8 @@
 package com.billsafe.ui.app
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -18,12 +21,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.billsafe.ui.app.models.SubscriptionUi
 import com.billsafe.ui.app.models.asUi
@@ -33,6 +38,14 @@ import com.billsafe.ui.app.screens.AnalyticsScreen
 import com.billsafe.ui.app.screens.HomeScreen
 import com.billsafe.ui.components.BillSafeBackground
 import com.billsafe.ui.viewmodels.SubscriptionViewModel
+import com.billsafe.ui.viewmodels.SessionViewModel
+import com.billsafe.ui.viewmodels.UserSyncViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.billsafe.R
 
 enum class BillSafeTab(
     val label: String,
@@ -44,22 +57,62 @@ enum class BillSafeTab(
     Account("Account", Icons.Rounded.Person),
 }
 
-data class BillSafeUserUi(
-    val fullName: String,
-    val email: String,
-    val photoUrl: String? = null
-)
-
 @Composable
 fun BillSafeApp() {
-    var onboardingVisible by rememberSaveable { mutableStateOf(true) }
     var selectedTab by rememberSaveable { mutableStateOf(BillSafeTab.Home) }
 
-    val user = remember {
-        BillSafeUserUi(
-            fullName = "Alex Wilson",
-            email = "alex.wilson@icloud.com"
-        )
+    val sessionViewModel: SessionViewModel = hiltViewModel()
+    val firebaseUser by sessionViewModel.firebaseUser.collectAsState()
+    val userSyncViewModel: UserSyncViewModel = hiltViewModel()
+
+    var signingIn by remember { mutableStateOf(false) }
+    var signInError by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val googleSignInClient = remember(context) {
+        val webClientId = context.getString(R.string.google_web_client_id).trim()
+        val gsoBuilder = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+
+        if (webClientId.isNotBlank() && webClientId != "REPLACE_ME") {
+            gsoBuilder.requestIdToken(webClientId)
+        }
+
+        val gso = gsoBuilder.build()
+
+        GoogleSignIn.getClient(context, gso)
+    }
+
+    val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode != Activity.RESULT_OK) {
+            signingIn = false
+            signInError = "Sign-in was cancelled."
+            return@rememberLauncherForActivityResult
+        }
+
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+            if (idToken.isNullOrBlank()) {
+                signingIn = false
+                signInError = "Google sign-in failed (missing token)."
+                return@rememberLauncherForActivityResult
+            }
+
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            FirebaseAuth.getInstance()
+                .signInWithCredential(credential)
+                .addOnCompleteListener { signInTask ->
+                    signingIn = false
+                    if (!signInTask.isSuccessful) {
+                        signInError = signInTask.exception?.message ?: "Google sign-in failed."
+                    }
+                }
+        } catch (e: ApiException) {
+            signingIn = false
+            signInError = e.localizedMessage ?: "Google sign-in failed."
+        }
     }
 
     val subscriptionViewModel: SubscriptionViewModel = hiltViewModel()
@@ -71,6 +124,24 @@ fun BillSafeApp() {
     var showProfileDetails by remember { mutableStateOf(false) }
     var showSecurity by remember { mutableStateOf(false) }
     var showPremiumPlans by remember { mutableStateOf(false) }
+
+    val userFullName = firebaseUser?.displayName ?: "User"
+    val userEmail = firebaseUser?.email.orEmpty()
+    val userPhotoUrl = firebaseUser?.photoUrl?.toString()
+
+    val onboardingVisible = firebaseUser == null
+
+    LaunchedEffect(onboardingVisible) {
+        if (onboardingVisible) {
+            selectedTab = BillSafeTab.Home
+        }
+    }
+
+    LaunchedEffect(firebaseUser?.uid) {
+        if (firebaseUser != null) {
+            userSyncViewModel.syncCurrentUserToBackend()
+        }
+    }
 
     BillSafeBackground {
         Scaffold(
@@ -91,14 +162,19 @@ fun BillSafeApp() {
                 BillSafeContent(
                     paddingValues = paddingValues,
                     selectedTab = selectedTab,
-                    user = user,
+                    userFullName = userFullName,
+                    userEmail = userEmail,
+                    userPhotoUrl = userPhotoUrl,
                     subscriptions = subscriptions,
                     onShowAllSubscriptions = { showAllSubscriptions = true },
                     onShowProfileDetails = { showProfileDetails = true },
                     onShowSecurity = { showSecurity = true },
                     onShowPremiumPlans = { showPremiumPlans = true },
                     onLogout = {
-                        onboardingVisible = true
+                        sessionViewModel.signOut()
+                        googleSignInClient.signOut()
+                        signInError = null
+                        signingIn = false
                         selectedTab = BillSafeTab.Home
                     }
                 )
@@ -128,7 +204,19 @@ fun BillSafeApp() {
 
         OnboardingOverlay(
             visible = onboardingVisible,
-            onFinish = { onboardingVisible = false }
+            onContinueWithGoogle = {
+                if (signingIn) return@OnboardingOverlay
+                val webClientId = context.getString(R.string.google_web_client_id).trim()
+                if (webClientId.isBlank() || webClientId == "REPLACE_ME") {
+                    signInError = "Google sign-in isnâ€™t configured yet. Set google_web_client_id in strings.xml."
+                    return@OnboardingOverlay
+                }
+                signInError = null
+                signingIn = true
+                signInLauncher.launch(googleSignInClient.signInIntent)
+            },
+            isSigningIn = signingIn,
+            errorMessage = signInError
         )
     }
 }
@@ -137,7 +225,9 @@ fun BillSafeApp() {
 private fun BillSafeContent(
     paddingValues: PaddingValues,
     selectedTab: BillSafeTab,
-    user: BillSafeUserUi,
+    userFullName: String,
+    userEmail: String,
+    userPhotoUrl: String?,
     subscriptions: List<SubscriptionUi>,
     onShowAllSubscriptions: () -> Unit,
     onShowProfileDetails: () -> Unit,
@@ -156,8 +246,8 @@ private fun BillSafeContent(
             when (tab) {
                 BillSafeTab.Home -> HomeScreen(
                     paddingValues = paddingValues,
-                    userFullName = user.fullName,
-                    userPhotoUrl = user.photoUrl,
+                    userFullName = userFullName,
+                    userPhotoUrl = userPhotoUrl,
                     subscriptions = subscriptions,
                     onSeeAll = onShowAllSubscriptions
                 )
@@ -165,9 +255,9 @@ private fun BillSafeContent(
                 BillSafeTab.Alerts -> AlertsScreen(paddingValues = paddingValues)
                 BillSafeTab.Account -> AccountScreen(
                     paddingValues = paddingValues,
-                    userFullName = user.fullName,
-                    userEmail = user.email,
-                    userPhotoUrl = user.photoUrl,
+                    userFullName = userFullName,
+                    userEmail = userEmail,
+                    userPhotoUrl = userPhotoUrl,
                     onShowProfileDetails = onShowProfileDetails,
                     onShowSecurity = onShowSecurity,
                     onShowPremiumPlans = onShowPremiumPlans,

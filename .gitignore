@@ -24,6 +24,8 @@ backend/.env
 backend/.env.*
 !backend/.env.example
 backend/firebase-key.json
+*.jks
+*.keystore
 
 # --- Node ---
 node_modules/
@@ -44,3 +46,4 @@ android/app/google-services.json
 /INDEX.md
 /PROJECT_SUMMARY.md
 /ROADMAP.md
+/Blueprint.md

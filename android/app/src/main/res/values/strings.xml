@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">BillSafe</string>
+    <string name="app_name">Subscription Tracker</string>
     <string name="app_description">Smart Bill &amp; Subscription Manager</string>
+
+    <!-- Google Sign-In -->
+    <string name="google_web_client_id">130354962276-j2vlbhsjhpvc6cv0282a50qqh7gik6tl.apps.googleusercontent.com</string>
     
     <!-- Dashboard -->
     <string name="upcoming_bills">Upcoming Bills</string>

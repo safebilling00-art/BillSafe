@@ -5,7 +5,14 @@ const User = require('../models/User');
 const firebaseUtil = require('./firebaseUtil');
 
 // Run reminder checks every day at 9 AM
-const initializeReminderScheduler = () => {
+const initializeReminderScheduler = (options = {}) => {
+    const { notificationsEnabled = true } = options;
+
+    if (!notificationsEnabled) {
+        console.log('Reminder scheduler disabled (push notifications not configured)');
+        return;
+    }
+
     cron.schedule('0 9 * * *', async () => {
         console.log('Running reminder check...');
         

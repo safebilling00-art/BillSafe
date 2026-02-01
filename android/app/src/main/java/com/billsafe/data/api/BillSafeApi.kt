@@ -2,17 +2,18 @@ package com.billsafe.data.api
 
 import com.billsafe.data.entities.Bill
 import com.billsafe.data.entities.Subscription
-import com.billsafe.data.entities.User
+import com.billsafe.data.api.dto.BackendUserDto
+import com.billsafe.data.api.dto.CreateUserRequest
 import retrofit2.http.*
 
 interface BillSafeApi {
     
     // User endpoints
     @POST("/api/users/{uid}")
-    suspend fun createUser(@Path("uid") uid: String, @Body user: User): ApiResponse<User>
+    suspend fun createUser(@Path("uid") uid: String, @Body request: CreateUserRequest): ApiResponse<BackendUserDto>
 
     @GET("/api/users/{uid}")
-    suspend fun getUser(@Path("uid") uid: String): ApiResponse<User>
+    suspend fun getUser(@Path("uid") uid: String): ApiResponse<BackendUserDto>
 
     @GET("/api/users/{uid}/stats")
     suspend fun getUserStats(@Path("uid") uid: String): ApiResponse<Map<String, Any>>

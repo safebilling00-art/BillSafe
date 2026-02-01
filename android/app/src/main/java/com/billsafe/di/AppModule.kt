@@ -2,16 +2,19 @@ package com.billsafe.di
 
 import android.content.Context
 import androidx.room.Room
+import com.billsafe.BuildConfig
 import com.billsafe.data.api.BillSafeApi
 import com.billsafe.data.dao.BillDao
 import com.billsafe.data.dao.SubscriptionDao
 import com.billsafe.data.dao.UserDao
 import com.billsafe.data.database.AppDatabase
+import com.billsafe.network.BackendConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import com.google.firebase.auth.FirebaseAuth
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -36,7 +39,11 @@ object AppModule {
     @Provides
     fun provideOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor()
-        loggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
+        loggingInterceptor.level = if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+            HttpLoggingInterceptor.Level.NONE
+        }
 
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
@@ -47,7 +54,7 @@ object AppModule {
     @Provides
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:5000/") // Android emulator localhost
+            .baseUrl(BackendConfig.apiBaseUrl())
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -70,4 +77,8 @@ object AppModule {
     @Singleton
     @Provides
     fun provideUserDao(database: AppDatabase): UserDao = database.userDao()
+
+    @Singleton
+    @Provides
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 }

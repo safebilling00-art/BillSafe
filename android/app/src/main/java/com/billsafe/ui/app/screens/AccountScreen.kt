@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.WorkspacePremium
@@ -127,7 +127,7 @@ fun AccountScreen(
                 DividerLine()
 
                 SettingsRow(
-                    icon = Icons.Rounded.Logout,
+                    icon = Icons.AutoMirrored.Rounded.Logout,
                     iconTint = Color(0xFFFB7185),
                     label = "Log Out",
                     labelColor = Color(0xFFFB7185),

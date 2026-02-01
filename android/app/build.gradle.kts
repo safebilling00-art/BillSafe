@@ -19,8 +19,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5000/\"")
+        }
+
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", "\"https://REPLACE_ME/\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -30,6 +35,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -66,7 +72,9 @@ dependencies {
     // Firebase (use BOM)
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.48")

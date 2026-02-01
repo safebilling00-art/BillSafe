@@ -163,6 +163,10 @@ BillSafe/
    # Or press Shift + F10 in Android Studio
    ```
 
+   **Backend connectivity (debug builds):**
+   - Android emulator: backend is expected at `http://10.0.2.2:5000`
+   - Physical device: run `adb reverse tcp:5000 tcp:5000` so the app can reach your PC backend at `http://127.0.0.1:5000`
+
 ### Backend Setup
 
 1. **Clone backend folder**

@@ -51,7 +51,9 @@ import com.billsafe.ui.components.pressScaleClick
 @Composable
 fun OnboardingOverlay(
     visible: Boolean,
-    onFinish: () -> Unit
+    onContinueWithGoogle: () -> Unit,
+    isSigningIn: Boolean = false,
+    errorMessage: String? = null
 ) {
     var slide by rememberSaveable { mutableIntStateOf(1) }
     val totalSlides = 3
@@ -149,7 +151,7 @@ fun OnboardingOverlay(
                             GlassCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .pressScaleClick(onClick = onFinish)
+                                    .pressScaleClick(onClick = { if (!isSigningIn) onContinueWithGoogle() })
                                     .padding(0.dp),
                                 cornerRadius = 20.dp
                             ) {
@@ -161,7 +163,7 @@ fun OnboardingOverlay(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Continue with Google",
+                                        text = if (isSigningIn) "Signing inâ€¦" else "Continue with Google",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = Color.White
                                     )
@@ -178,6 +180,16 @@ fun OnboardingOverlay(
                                 color = Color(0xFF64748B),
                                 letterSpacing = 1.2.sp
                             )
+
+                            if (!errorMessage.isNullOrBlank()) {
+                                Text(
+                                    text = errorMessage,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFFB7185)
+                                )
+                            }
                         }
                     }
                 }

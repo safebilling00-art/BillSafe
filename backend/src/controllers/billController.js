@@ -35,7 +35,7 @@ exports.createBill = async (req, res) => {
         });
         await reminder.save();
 
-        res.status(201).json({ success: true, bill });
+        res.status(201).json({ success: true, data: bill });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -52,7 +52,7 @@ exports.getUserBills = async (req, res) => {
         }
 
         const bills = await Bill.find({ userId: user._id }).sort({ dueDate: 1 });
-        res.status(200).json({ success: true, bills });
+        res.status(200).json({ success: true, data: bills });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -69,7 +69,7 @@ exports.getActiveBills = async (req, res) => {
         }
 
         const bills = await Bill.find({ userId: user._id, isActive: true }).sort({ dueDate: 1 });
-        res.status(200).json({ success: true, bills });
+        res.status(200).json({ success: true, data: bills });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -87,7 +87,7 @@ exports.updateBill = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Bill not found' });
         }
 
-        res.status(200).json({ success: true, bill });
+        res.status(200).json({ success: true, data: bill });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -107,7 +107,7 @@ exports.deleteBill = async (req, res) => {
         // Delete associated reminders
         await Reminder.deleteMany({ billId });
 
-        res.status(200).json({ success: true, message: 'Bill deleted successfully' });
+        res.status(200).json({ success: true, data: { message: 'Bill deleted successfully' } });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -128,7 +128,7 @@ exports.markBillPaid = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Bill not found' });
         }
 
-        res.status(200).json({ success: true, bill });
+        res.status(200).json({ success: true, data: bill });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

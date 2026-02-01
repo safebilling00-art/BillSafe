@@ -1,5 +1,6 @@
 package com.billsafe.ui.app
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -115,6 +116,10 @@ private fun FullScreenOverlay(
     onDismiss: () -> Unit,
     content: @Composable () -> Unit
 ) {
+    BackHandler(enabled = visible) {
+        onDismiss()
+    }
+
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(tween(180)),
@@ -372,11 +377,9 @@ private fun PlanCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
+                .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(24.dp))
                 .background(Color.White.copy(alpha = 0.08f))
                 .padding(18.dp)
-                .then(
-                    if (highlight) Modifier else Modifier
-                )
         ) {
             Column {
                 if (badge != null) {

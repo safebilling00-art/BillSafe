@@ -4,12 +4,24 @@ const Bill = require('../models/Bill');
 // Create or update user
 exports.createUser = async (req, res) => {
     try {
-        const { uid, email, name, phoneNumber, fcmToken } = req.body;
+        const { uid } = req.params;
+        const { email, name, phoneNumber, fcmToken } = req.body;
+
+        if (!uid) {
+            return res.status(400).json({ success: false, error: 'Missing uid' });
+        }
+
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Missing email' });
+        }
 
         let user = await User.findOne({ uid });
         
         if (user) {
             // Update existing user
+            user.email = email;
+            user.name = name ?? user.name;
+            user.phoneNumber = phoneNumber ?? user.phoneNumber;
             user.fcmToken = fcmToken || user.fcmToken;
             user.updatedAt = new Date();
             await user.save();
@@ -25,7 +37,7 @@ exports.createUser = async (req, res) => {
             await user.save();
         }
 
-        res.status(200).json({ success: true, user });
+        res.status(200).json({ success: true, data: user });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -41,7 +53,7 @@ exports.getUser = async (req, res) => {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        res.status(200).json({ success: true, user });
+        res.status(200).json({ success: true, data: user });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -75,7 +87,7 @@ exports.getUserStats = async (req, res) => {
             stats.categories[bill.category]++;
         });
 
-        res.status(200).json({ success: true, stats });
+        res.status(200).json({ success: true, data: stats });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

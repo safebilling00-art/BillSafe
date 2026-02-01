@@ -1,0 +1,13 @@
+{
+  "name": "subscription-tracker-monorepo",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm --prefix backend install",
+    "start": "npm --prefix backend start",
+    "backend:install": "npm --prefix backend install",
+    "backend:dev": "npm --prefix backend run dev",
+    "backend:start": "npm --prefix backend start",
+    "backend:test": "npm --prefix backend test",
+    "android:build": "cd android && gradlew.bat build"
+  }
+}
