@@ -43,7 +43,7 @@ class UserSyncViewModel @Inject constructor(
 
             try {
                 val fcmToken = getFcmTokenOrNull()
-                Log.d(
+                Log.i(
                     "BillSafeFCM",
                     "Syncing user to backend uid=$uid baseUrl=${BackendConfig.apiBaseUrl()} hasFcmToken=${!fcmToken.isNullOrBlank()}"
                 )
@@ -63,6 +63,8 @@ class UserSyncViewModel @Inject constructor(
                     _lastError.value = message
                     Log.w("UserSync", "Backend user sync failed: $message")
                     Log.w("BillSafeFCM", "Backend user sync failed: $message")
+                } else {
+                    Log.i("BillSafeFCM", "Backend user sync succeeded for uid=$uid")
                 }
             } catch (e: Exception) {
                 val message = e.message ?: "Failed to sync user."

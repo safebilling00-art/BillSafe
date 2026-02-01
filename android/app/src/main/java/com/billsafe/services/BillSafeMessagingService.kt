@@ -77,13 +77,13 @@ class BillSafeMessagingService : FirebaseMessagingService() {
     private fun saveFcmTokenToBackend(token: String) {
         val firebaseUser = FirebaseAuth.getInstance().currentUser
         if (firebaseUser == null) {
-            Log.d("BillSafeFCM", "FCM token refreshed but user is not signed in; will sync on next login.")
+            Log.i("BillSafeFCM", "FCM token refreshed but user is not signed in; will sync on next login.")
             return
         }
 
         val email = firebaseUser.email
         if (email.isNullOrBlank()) {
-            Log.d("BillSafeFCM", "FCM token refreshed but user has no email; skipping backend sync.")
+            Log.i("BillSafeFCM", "FCM token refreshed but user has no email; skipping backend sync.")
             return
         }
 
